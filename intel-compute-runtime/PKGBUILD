@@ -1,0 +1,37 @@
+# Maintainer: Daniel Bermond < gmail-com: danielbermond >
+
+_srcname=compute-runtime
+pkgname=intel-${_srcname}
+pkgver=19.11.12599
+pkgrel=2
+pkgdesc="Intel(R) Graphics Compute Runtime for OpenCL(TM). Replaces Beignet for Gen8 (Broadwell) and beyond."
+arch=(x86_64)
+url="https://01.org/compute-runtime"
+license=(MIT)
+depends=(ocl-icd ncurses zlib intel-gmmlib)
+makedepends=(cmake intel-gmmlib intel-graphics-compiler libva)
+optdepends=('libva: for cl_intel_va_api_media_sharing'
+            'libdrm: for cl_intel_va_api_media_sharing')
+provides=(opencl-driver)
+source=("https://github.com/intel/compute-runtime/archive/${pkgver}/${pkgname}-${pkgver}.tar.gz")
+sha256sums=('9601e776bc8ea51112ed2c713f8f12bb1de7a0dcc5f90d8b80f9a2214b851761')
+
+prepare() {
+    mkdir -p build
+}
+
+build() {
+    cd build
+    cmake ../${_srcname}-${pkgver} \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_INSTALL_LIBDIR=lib \
+        -DNEO_DRIVER_VERSION=${pkgver}
+    make
+}
+
+package() {
+    cd build
+    make DESTDIR="${pkgdir}" install
+    install -Dm644 ../${_srcname}-${pkgver}/LICENSE -t "${pkgdir}"/usr/share/licenses/${pkgname}
+}
