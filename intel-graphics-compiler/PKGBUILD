@@ -22,14 +22,12 @@ prepare() {
 
 build() {
     cd build
-    
-    cmake \
-        -DCMAKE_INSTALL_PREFIX:PATH='/usr' \
+    cmake ../"${pkgname}-${pkgver}" \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
         -DIGC_OPTION__OUTPUT_DIR='../igc-install/None' \
         -DIGC_PREFERRED_LLVM_VERSION='8.0.0' \
-        -Wno-dev \
-        ../"${pkgname}-${pkgver}"
-        
+        -Wno-dev
     make
     
     # license
@@ -39,10 +37,9 @@ build() {
 
 package() {
     cd build
+    make DESTDIR="${pkgdir}" install
+    install -Dm644 LICENSE -t "${pkgdir}"/usr/share/licenses/${pkgname}
     
-    make DESTDIR="$pkgdir" install
-    
-    rm "${pkgdir}/usr/lib/libcommon_clang.so"
-    
-    install -D -m644 LICENSE -t "${pkgdir}/usr/share/licenses/${pkgname}"
+    # Fix libcommon_clang being embedded
+    rm "${pkgdir}"/usr/lib/libcommon_clang.so
 }
