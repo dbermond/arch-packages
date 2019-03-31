@@ -24,7 +24,7 @@ build() {
     cmake ../"${pkgname}-${pkgver}" \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr \
-        -DIGC_OPTION__OUTPUT_DIR='../igc-install/None' \
+        -DIGC_OPTION__OUTPUT_DIR='../igc-install/Release' \
         -DIGC_PREFERRED_LLVM_VERSION='8.0.0' \
         -Wno-dev
     make
