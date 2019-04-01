@@ -1,0 +1,82 @@
+From 7a7bb50328106f9f86b28bc404355fc891e104c6 Mon Sep 17 00:00:00 2001
+From: Dmitry Rogozhkin <dmitry.v.rogozhkin@intel.com>
+Date: Wed, 13 Mar 2019 05:18:09 -0700
+Subject: [PATCH] Fix queue casts which cause spirv to die with assert
+
+Fixes: intel/opencl-clang#46
+
+This fixes ocloc build of scheduler.cl which dies with assert from spirv:
+  SPIRV-LLVM-Translator/lib/SPIRV/SPIRVWriter.cpp:685
+
+Signed-off-by: Dmitry Rogozhkin <dmitry.v.rogozhkin@intel.com>
+
+https://github.com/intel/compute-runtime/pull/143
+
+Change-Id: I5c9d4a75321008802b9d77ef4a6bad3812e1b8b4
+---
+ runtime/scheduler/scheduler.cl | 20 ++++++++++----------
+ 1 file changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/runtime/scheduler/scheduler.cl b/runtime/scheduler/scheduler.cl
+index 814a7352..c48889e4 100644
+--- a/runtime/scheduler/scheduler.cl
++++ b/runtime/scheduler/scheduler.cl
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (C) 2017-2018 Intel Corporation
++ * Copyright (C) 2017-2019 Intel Corporation
+  *
+  * SPDX-License-Identifier: MIT
+  *
+@@ -155,18 +155,18 @@ __global IGIL_KernelData* IGIL_GetKernelData( __global IGIL_KernelDataHeader* pK
+ }
+ 
+ 
+-inline __global IGIL_CommandHeader* TEMP_IGIL_GetCommandHeader( queue_t q, uint offset )
++inline __global IGIL_CommandHeader* TEMP_IGIL_GetCommandHeader( __global IGIL_CommandQueue* q, uint offset )
+ {
+-    __global uchar *pQueueRaw = __builtin_astype( q, __global uchar* );
++    __global uchar *pQueueRaw = (__global uchar *) q;
+ 
+     __global IGIL_CommandHeader* pCommand = ( __global IGIL_CommandHeader* )( pQueueRaw + offset );
+ 
+     return pCommand;
+ }
+ //Make sure enough command packets are in command queue before calling this function.
+-__global IGIL_CommandHeader* TEMP_IGIL_GetNthCommandHeader( queue_t q, uint initialOffset, uint number )
++__global IGIL_CommandHeader* TEMP_IGIL_GetNthCommandHeader( __global IGIL_CommandQueue* q, uint initialOffset, uint number )
+ {
+-    __global uchar *pQueueRaw = __builtin_astype( q, __global uchar* );
++    __global uchar *pQueueRaw = (__global uchar *) q;
+ 
+     __global IGIL_CommandHeader* pCommand = ( __global IGIL_CommandHeader* )( pQueueRaw + initialOffset );
+     uint Offset = initialOffset;
+@@ -182,9 +182,9 @@ __global IGIL_CommandHeader* TEMP_IGIL_GetNthCommandHeader( queue_t q, uint init
+ }
+ 
+ //Make sure enough command packets are in command queue before calling this function.
+-uint TEMP_IGIL_GetNthCommandHeaderOffset( queue_t q, uint initialOffset, uint number )
++uint TEMP_IGIL_GetNthCommandHeaderOffset( __global IGIL_CommandQueue* q, uint initialOffset, uint number )
+ {
+-    __global uchar *pQueueRaw = __builtin_astype( q, __global uchar* );
++    __global uchar *pQueueRaw = (__global uchar *) q;
+ 
+     __global IGIL_CommandHeader* pCommand = ( __global IGIL_CommandHeader* )( pQueueRaw + initialOffset );
+     uint Offset = initialOffset;
+@@ -2878,13 +2878,13 @@ void SchedulerParallel20(
+         {
+             if( CurrentPacket == GroupID )
+             {
+-                offset                  = TEMP_IGIL_GetNthCommandHeaderOffset( __builtin_astype( pQueue, queue_t ), InitialOffset, CurrentPacket );
++                offset                  = TEMP_IGIL_GetNthCommandHeaderOffset( pQueue, InitialOffset, CurrentPacket );
+             }
+             else
+             {
+-                offset                  = TEMP_IGIL_GetNthCommandHeaderOffset( __builtin_astype( pQueue, queue_t ), offset, get_num_groups( 0 ) );
++                offset                  = TEMP_IGIL_GetNthCommandHeaderOffset( pQueue, offset, get_num_groups( 0 ) );
+             }
+-            pCommand                    = TEMP_IGIL_GetCommandHeader( __builtin_astype( pQueue, queue_t ), offset );
++            pCommand                    = TEMP_IGIL_GetCommandHeader( pQueue, offset );
+ 
+             //Initialize command packet with proper lws
+             if( get_local_id( 0 ) == 0 )
