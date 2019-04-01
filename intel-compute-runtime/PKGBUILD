@@ -8,8 +8,8 @@ pkgdesc="Intel(R) Graphics Compute Runtime for OpenCL(TM). Replaces Beignet for 
 arch=(x86_64)
 url="https://01.org/compute-runtime"
 license=(MIT)
-depends=(gcc-libs)
-makedepends=(cmake intel-gmmlib intel-graphics-compiler intel-opencl-clang libva)
+depends=(gcc-libs intel-gmmlib intel-graphics-compiler)
+makedepends=(cmake libva)
 optdepends=('libva: for cl_intel_va_api_media_sharing'
             'libdrm: for cl_intel_va_api_media_sharing')
 provides=(opencl-driver)
